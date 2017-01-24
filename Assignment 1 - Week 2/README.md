@@ -1,3 +1,10 @@
+# Week 2 Project
+
+This is the week 2 project for the JHU Coursera Data Science course Reproducible Research  
+It is originally cloned from the projected repository at https://github.com/rdpeng/RepData_PeerAssessment1.git  
+  
+The original project description readme file follows:  
+
 ## Introduction
 
 It is now possible to collect a large amount of data about personal
