@@ -3,8 +3,8 @@
 This is the second of the projects for the JHU Coursera Data Science course [Reproducible Research]
 (https://www.coursera.org/learn/reproducible-research)
 
-The goal of the project was to complete an analysis using the NOAA Storm Database using R and produce a publishable
-analysis document.  The original project description follows:
+The goal of the project was to complete an analysis of data from the NOAA Storm Database using R and produce
+a publishable analysis document.  The original project description follows:
 
 ## Assignment
 
