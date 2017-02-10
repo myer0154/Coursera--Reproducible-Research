@@ -92,10 +92,44 @@ totalDmg <- totalDmg[order(totalDmg$TotalDmgVal, decreasing = TRUE),]
 ## Results
 ### Public Health
 
+The top 10 causes of injuries and fatalities are listed below.  The most common cause for both is tornados, followed by thunderstorm winds for injuries and excessive heat for fatalities. Noting similar `EVTYPE` value names, such as `HEAT` and `EXCESSIVE HEAT`, it is likely that some further combination of categories should be undertaken.  This has been omitted for the current analysis, however.
+``` {r}
+head(injuries, 10)
+```
+``` {r}
+head(fatalities, 10)
+```
+
+A plot showing the top 10 causes of each further illustrates the relative harm caused by these events.
 ``` {r} 
-hp1 <- ggplot(head(injuries, 5), aes(x=reorder(EVTYPE, -INJURIES), y=INJURIES))
-hp1 <- hp1 + geom_bar(stat = "identity")
-hp2 <- ggplot(head(fatalities, 5), aes(x=reorder(EVTYPE, -FATALITIES), y=FATALITIES))
-hp2 <- hp2 + geom_bar(stat = "identity")
-grid.arrange(hp1, hp2, ncol=2)
+hp1 <- ggplot(head(injuries, 10), aes(x=reorder(EVTYPE, -INJURIES), y=INJURIES))
+hp1 <- hp1 + geom_bar(fill = "deepskyblue4", stat = "identity") + theme(axis.text.x = element_text(angle = 90, hjust = 1)) + ylab("Number of injuries") + xlab("")
+hp2 <- ggplot(head(fatalities, 10), aes(x=reorder(EVTYPE, -FATALITIES), y=FATALITIES))
+hp2 <- hp2 + geom_bar(fill = "firebrick", stat = "identity") + theme(axis.text.x = element_text(angle = 90, hjust = 1)) + ylab("Number of fatalities") + xlab("")
+grid.arrange(hp1, hp2, ncol=2, top="Injuries/Fatalities Caused by Severe Weather Events (Top 10)")
+```
+
+### Economic Damage
+
+We can likewise examine the top causes of property, crop damage, and total damage
+``` {r}
+head(propDmg, 10)
+```
+``` {r}
+head(cropDmg, 10)
+```
+``` {r}
+head(totalDmg, 10)
+```
+
+Because the highest propery damage values are approximately an order of magnitude higher than the highest crop damages, property damage is the dominant contributor to economic damages.  However, the presence of unique events such as drought and extreme cold in the crop damage list makes it significant to separate the two categories.
+``` {r}
+ep1 <- ggplot(head(totalDmg, 10), aes(x=reorder(EVTYPE, -TotalDmgVal), y=TotalDmgVal/1e9))
+ep1 <- ep1 + geom_bar(fill = "firebrick", stat = "identity") + theme(axis.text.x = element_text(angle = 90, hjust = 1)) + ylab("Value of damage (billion USD)") + xlab("") + ggtitle("Total")
+ep2 <- ggplot(head(propDmg, 10), aes(x=reorder(EVTYPE, -PropDmgVal), y=PropDmgVal/1e9))
+ep2 <- ep2 + geom_bar(fill = "seagreen", stat = "identity") + theme(axis.text.x = element_text(angle = 90, hjust = 1)) + ylab("") + xlab("") + ggtitle("Property")
+ep3 <- ggplot(head(cropDmg, 10), aes(x=reorder(EVTYPE, -CropDmgVal), y=CropDmgVal/1e9))
+ep3 <- ep3 + geom_bar(fill = "goldenrod", stat = "identity") + theme(axis.text.x = element_text(angle = 90, hjust = 1)) + ylab("") + xlab("") + ggtitle("Crop")
+
+grid.arrange(ep1, ep2, ep3, ncol=3, top="Economic Damage Caused by Severe Weather Events")
 ```
