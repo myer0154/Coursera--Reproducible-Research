@@ -15,9 +15,10 @@ The analysis considers the health consequences from the perspective of both inju
 
 ## Data Processing
 
-The ggplot2 R package is used to produce the included plots.
+The `ggplot2` R package is used to produce the included plots, and the panels are arranged with the `grid` package
 ``` {r}
 library(ggplot2)
+library(gridExtra)
 ```
 
 The first step is to download and read data.  Both of these steps can be skipped if the file or object already exists.
@@ -36,7 +37,7 @@ stormData <- stormData[, c("EVTYPE","FATALITIES","INJURIES","PROPDMG","PROPDMGEX
 ```
 
 
-### Population Health 
+### Public Health 
 
 Since there is no good metric to compare injuries to fatalities, they are aggregated separately and then each sorted in decreasing order.
 ``` {r}
@@ -86,4 +87,15 @@ totalDmg <- aggregate(TotalDmgVal ~ EVTYPE, data=stormData, FUN=sum)
 propDmg <- propDmg[order(propDmg$PropDmgVal, decreasing = TRUE),]
 cropDmg <- cropDmg[order(cropDmg$CropDmgVal, decreasing = TRUE),]
 totalDmg <- totalDmg[order(totalDmg$TotalDmgVal, decreasing = TRUE),]
+```
+
+## Results
+### Public Health
+
+``` {r} 
+hp1 <- ggplot(head(injuries, 5), aes(x=reorder(EVTYPE, -INJURIES), y=INJURIES))
+hp1 <- hp1 + geom_bar(stat = "identity")
+hp2 <- ggplot(head(fatalities, 5), aes(x=reorder(EVTYPE, -FATALITIES), y=FATALITIES))
+hp2 <- hp2 + geom_bar(stat = "identity")
+grid.arrange(hp1, hp2, ncol=2)
 ```
