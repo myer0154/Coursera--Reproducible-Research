@@ -1,7 +1,5 @@
 ---
-title: "Reproducible Research - Project 2"
-author: "Jason C. Myers"
-date: "February 9, 2017"
+title: "Health and Economic Consequences of Severe Weather Events in the US"
 output: html_document
 ---
 
@@ -9,9 +7,22 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-Download and read data, if necessary
+## Synopsis
+
+This analysis is the second project for the Coursera Data Science Specialization course Reproducible Research.  The objective is to use the National Oceanic and Atmospheric Administration's (NOAA) [Storm Events Database] (https://www.ncdc.noaa.gov/stormevents/) to assess the effects of severe weather events in terms of both health and economic damage.  
+
+The analysis considers the health consequences from the perspective of both injuries and fatalies.  The economic consequences are represented by combining the estimated value of the damages to property and agriculture (crops).
+
+## Data Processing
+
+The ggplot2 R package is used to produce the included plots.
 ``` {r}
-if(!exists(stormData)) {
+library(ggplot2)
+```
+
+The first step is to download and read data.  Both of these steps can be skipped if the file or object already exists.
+``` {r, cache=TRUE}
+if(!exists("stormData")) {
   if(!file.exists("data.csv.bz2")) {
     download.file("https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2FStormData.csv.bz2", "./data.csv.bz2")
   }
@@ -19,22 +30,60 @@ if(!exists(stormData)) {
 }
 ```
 
-## R Markdown
-
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
-
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
-
-```{r cars}
-summary(cars)
+Only the event type (`EVTYPE`), health (`FATALITIES` and `INJURIES`), and damage (`PROPDMG`, `PROPDMGEXP`, `CROPDMG`, `CROPDMGEXP`) are required for this analysis, so select those columns from the full data set.
+``` {r}
+stormData <- stormData[, c("EVTYPE","FATALITIES","INJURIES","PROPDMG","PROPDMGEXP","CROPDMG","CROPDMGEXP")]
 ```
 
-## Including Plots
 
-You can also embed plots, for example:
+### Population Health 
 
-```{r pressure, echo=FALSE}
-plot(pressure)
+Since there is no good metric to compare injuries to fatalities, they are aggregated separately and then each sorted in decreasing order.
+``` {r}
+fatalities <- aggregate(FATALITIES ~ EVTYPE, data=stormData, FUN=sum)
+injuries <- aggregate(INJURIES ~ EVTYPE, data=stormData, FUN=sum)
+fatalities <- fatalities[order(fatalities$FATALITIES, decreasing = TRUE),]
+injuries <- injuries[order(injuries$INJURIES, decreasing = TRUE),]
 ```
 
-Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+### Economic Damage
+
+The exponents for the property and crop damage values have been entered using a variety of conventions, so some work needs to be done to extract meaningful value information. Values of H, K, M, and B (either capital or lowercase) have been treated as hundred, thousand, million, and billion, as described in the database documentation.  Numerical values are assumed to represent `10^(value)`, and other extraneous symbols (e.g., -, ?, +) are assumed to represent an exponent of zero.  First, I define a function to convert between the characters and numeric values.
+```{r}
+convExp <- function(symb) {
+  symb <- as.character(symb)
+  if(symb %in% c("h", "H"))
+    return(100)
+  if(symb %in% c("k", "K"))
+    return(1000)
+  if(symb %in% c("m", "M"))
+    return(1000000)
+  if(symb %in% c("b", "B"))
+    return(1000000000)
+  if(symb %in% c("", "-", "?", "+"))
+    return(1)
+  else
+    return(10 ** as.numeric(symb))
+}
+```
+
+Next, apply the function to the `PROPDMGEXP` and `CROPDMGEXP` columns to create multipliers.  These values are then multiplied by the `PROPDMG` and `CROPDMG` columns to produce the numerical value for each damage type.  They are also added together to produce a total value of damage.
+``` {r, cache=TRUE}
+stormData$PropDmgMult <- sapply(stormData$PROPDMGEXP, convExp)
+stormData$CropDmgMult <- sapply(stormData$CROPDMGEXP, convExp)
+stormData$PropDmgVal <- stormData$PROPDMG * stormData$PropDmgMult
+stormData$CropDmgVal <- stormData$CROPDMG * stormData$CropDmgMult
+stormData$TotalDmgVal <- stormData$PropDmgVal + stormData$CropDmgVal
+```
+
+Finally, each of the damage lists are aggregated by `EVTYPE` sorted in decreasing order.
+``` {r}
+propDmg <- aggregate(PropDmgVal ~ EVTYPE, data=stormData, FUN=sum)
+cropDmg <- aggregate(CropDmgVal ~ EVTYPE, data=stormData, FUN=sum)
+totalDmg <- aggregate(TotalDmgVal ~ EVTYPE, data=stormData, FUN=sum)
+
+propDmg <- propDmg[order(propDmg$PropDmgVal, decreasing = TRUE),]
+cropDmg <- cropDmg[order(cropDmg$CropDmgVal, decreasing = TRUE),]
+totalDmg <- totalDmg[order(totalDmg$TotalDmgVal, decreasing = TRUE),]
+```
